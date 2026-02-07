@@ -2,10 +2,19 @@
 #include <fstream>
 #include <cstdio>
 #include <string>
+#include <limits>
+
 #include "books.h"
+#include "loans.h"
 
 using namespace std;
 
+const string LOANS_FILE = "loans.txt";
+
+static void ignore_line()
+{
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+}
 
 bool open_files(const string& filename, ifstream& in, ofstream& tmp)
 {
@@ -15,8 +24,10 @@ bool open_files(const string& filename, ifstream& in, ofstream& tmp)
 
     tmp.open(filename + ".tmp");
     if (!tmp)
+    {
+        in.close();
         return false;
-
+    }
     return true;
 }
 
@@ -55,14 +66,14 @@ void add_book(const string& filename)
 {
     Book book;
 
-    cin.ignore();
-    cout << "Enter title:" << endl;
+    ignore_line();
+    cout << "Enter title: ";
     getline(cin, book.title);
 
-    cout << "Enter author:" << endl;
+    cout << "Enter author: ";
     getline(cin, book.author);
 
-    cout << "Enter year:" << endl;
+    cout << "Enter year: ";
     cin >> book.year;
 
     book.id = get_next_id(filename);
@@ -71,7 +82,7 @@ void add_book(const string& filename)
     ofstream file(filename, ios::app);
     if (!file)
     {
-        cout << "Cant open file." << endl;
+        cout << "Cannot open books file." << endl;
         return;
     }
 
@@ -81,7 +92,7 @@ void add_book(const string& filename)
          << book.year << "|"
          << book.available << '\n';
 
-    cout << "Book added successfully." << endl;
+    cout << "Book added." << endl;
 }
 
 bool is_library_empty(const string& filename)
@@ -96,12 +107,17 @@ bool is_library_empty(const string& filename)
 
 bool remove_book_by_id(const string& filename, int book_id)
 {
+    // NIE usuwamy książki jeśli jest wypożyczona (żeby loans się nie rozjechały)
+    if (book_is_borrowed_by_someone(book_id, LOANS_FILE))
+        return false;
+
     ifstream in(filename);
     if (!in)
         return false;
 
-    ofstream out(filename + ".tmp");
-    if (!out)
+    const string tmp_name = filename + ".tmp";
+    ofstream tmp(tmp_name);
+    if (!tmp)
         return false;
 
     bool found = false;
@@ -122,20 +138,20 @@ bool remove_book_by_id(const string& filename, int book_id)
             continue;
         }
 
-        out << line << '\n';
+        tmp << line << '\n';
     }
 
     in.close();
-    out.close();
+    tmp.close();
 
     if (!found)
     {
-        remove((filename + ".tmp").c_str());
+        remove(tmp_name.c_str());
         return false;
     }
 
     remove(filename.c_str());
-    rename((filename + ".tmp").c_str(), filename.c_str());
+    rename(tmp_name.c_str(), filename.c_str());
     return true;
 }
 
@@ -143,51 +159,46 @@ void remove_book(const string& filename)
 {
     if (is_library_empty(filename))
     {
-        cout << "Library is empty, no books." << endl;
+        cout << "Library is empty." << endl;
         return;
     }
 
-    while (true)
+    int book_id;
+    cout << "Enter book id to remove: ";
+    cin >> book_id;
+
+    if (book_is_borrowed_by_someone(book_id, LOANS_FILE))
     {
-        int choice;
-        cout << "Enter book id to remove, press 0 to exit:" << endl;
-        cin >> choice;
-
-        if (choice == 0)
-            return;
-
-        if (choice < 0)
-        {
-            cout << "Invalid id, try again." << endl;
-            continue;
-        }
-
-        if (remove_book_by_id(filename, choice))
-        {
-            cout << "Book removed." << endl;
-            return;
-        }
-        else
-        {
-            cout << "No book with this id." << endl;
-        }
+        cout << "Cannot remove: book is currently borrowed." << endl;
+        return;
     }
+
+    if (remove_book_by_id(filename, book_id))
+        cout << "Book removed." << endl;
+    else
+        cout << "No book with this id (or cannot remove)." << endl;
 }
 
 bool borrow_book(int user_id, int book_id, const string& filename)
 {
+    // 1) jeśli loans mówi, że ktoś ma tę książkę -> stop
+    if (book_is_borrowed_by_someone(book_id, LOANS_FILE))
+    {
+        cout << "Book already borrowed." << endl;
+        return false;
+    }
+
     ifstream in;
     ofstream tmp;
-
     if (!open_files(filename, in, tmp))
     {
-        cout << "Error open file." << endl;
+        cout << "Error opening books file." << endl;
         return false;
     }
 
     string line;
     bool found = false;
-    bool borrowed = false;
+    bool changed = false;
 
     while (getline(in, line))
     {
@@ -204,24 +215,26 @@ bool borrow_book(int user_id, int book_id, const string& filename)
         if (id != book_id)
         {
             tmp << line << '\n';
+            continue;
+        }
+
+        // id == book_id
+        found = true;
+
+        size_t last = line.rfind('|');
+        int avail = stoi(line.substr(last + 1));
+
+        if (avail == 0)
+        {
+            // już niedostępna wg books.txt
+            tmp << line << '\n';
         }
         else
         {
-            found = true;
-
-            size_t last = line.rfind('|');
-            int avail = stoi(line.substr(last + 1));
-
-            if (avail == 0)
-            {
-                tmp << line << '\n';
-            }
-            else
-            {
-                string prefix = line.substr(0, last + 1);
-                tmp << prefix << 0 << '\n';
-                borrowed = true;
-            }
+            // zmieniamy na unavailable
+            string prefix = line.substr(0, last + 1);
+            tmp << prefix << 0 << '\n';
+            changed = true;
         }
     }
 
@@ -235,33 +248,48 @@ bool borrow_book(int user_id, int book_id, const string& filename)
         return false;
     }
 
-    if (!borrowed)
+    if (!changed)
     {
         remove((filename + ".tmp").c_str());
-        cout << "Book already borrowed." << endl;
+        cout << "Book already borrowed (books file says unavailable)." << endl;
         return false;
     }
 
+    // podmiana pliku books
     remove(filename.c_str());
     rename((filename + ".tmp").c_str(), filename.c_str());
+
+    // zapis do loans
+    if (!add_loan(user_id, book_id, LOANS_FILE))
+    {
+        cout << "Loan save error (loans file)." << endl;
+        // minimalnie: informacja; (idealnie: rollback books)
+        return false;
+    }
+
     cout << "Book borrowed." << endl;
     return true;
 }
 
 bool return_book(int user_id, int book_id, const string& filename)
 {
+    if (!loan_exists(user_id, book_id, LOANS_FILE))
+    {
+        cout << "You did not borrow this book." << endl;
+        return false;
+    }
+
     ifstream in;
     ofstream tmp;
-
     if (!open_files(filename, in, tmp))
     {
-        cout << "Error open file." << endl;
+        cout << "Error opening books file." << endl;
         return false;
     }
 
     string line;
     bool found = false;
-    bool returned = false;
+    bool changed = false;
 
     while (getline(in, line))
     {
@@ -278,24 +306,26 @@ bool return_book(int user_id, int book_id, const string& filename)
         if (id != book_id)
         {
             tmp << line << '\n';
+            continue;
+        }
+
+        // id == book_id
+        found = true;
+
+        size_t last = line.rfind('|');
+        int avail = stoi(line.substr(last + 1));
+
+        if (avail == 1)
+        {
+            // już dostępna wg books.txt
+            tmp << line << '\n';
         }
         else
         {
-            found = true;
-
-            size_t last = line.rfind('|');
-            int avail = stoi(line.substr(last + 1));
-
-            if (avail == 1)
-            {
-                tmp << line << '\n';
-            }
-            else
-            {
-                string prefix = line.substr(0, last + 1);
-                tmp << prefix << 1 << '\n';
-                returned = true;
-            }
+            // zmieniamy na available
+            string prefix = line.substr(0, last + 1);
+            tmp << prefix << 1 << '\n';
+            changed = true;
         }
     }
 
@@ -309,16 +339,39 @@ bool return_book(int user_id, int book_id, const string& filename)
         return false;
     }
 
-    if (!returned)
+    if (!changed)
     {
         remove((filename + ".tmp").c_str());
-        cout << "Book was not borrowed." << endl;
+        cout << "Book already returned (books file says available)." << endl;
         return false;
     }
 
     remove(filename.c_str());
     rename((filename + ".tmp").c_str(), filename.c_str());
+
+    if (!remove_loan(user_id, book_id, LOANS_FILE))
+    {
+        cout << "Loan remove error (loans file)." << endl;
+        return false;
+    }
+
     cout << "Book returned." << endl;
     return true;
 }
 
+void display_books(const string& filename)
+{
+    ifstream in(filename);
+    if (!in)
+    {
+        cout << "Error opening books file." << endl;
+        return;
+    }
+
+    string line;
+    while (getline(in, line))
+    {
+        if (!line.empty())
+            cout << line << endl;
+    }
+}

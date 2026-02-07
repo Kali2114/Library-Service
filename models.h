@@ -4,7 +4,7 @@
 struct User
 {
     int id;
-    std::string login;
+    std::string name;
     bool is_admin = false;
 };
 

@@ -1,13 +1,21 @@
 #pragma once
 #include <string>
+#include <fstream>
+
 #include "models.h"
 
+int get_next_id(const std::string& filename);
 
-int get_next_id(const std::string&);
+void add_book(const std::string& filename);
+bool is_library_empty(const std::string& filename);
 
-void add_book(const std::string&);
-bool is_library_empty(const std::string&);
-bool remove_book_by_id(const std::string&, int);
+bool remove_book_by_id(const std::string& filename, int book_id);
+void remove_book(const std::string& filename);
 
-void remove_book(const std::string&);
-bool borrow_book(int, int);
+bool borrow_book(int user_id, int book_id, const std::string& filename);
+bool return_book(int user_id, int book_id, const std::string& filename);
+
+bool open_files(const std::string& filename, std::ifstream& in, std::ofstream& tmp);
+bool parse_id(const std::string& line, int& id);
+
+void display_books(const std::string& filename);
