@@ -1,4 +1,3 @@
-#include <iostream>
 #include <fstream>
 #include <string>
 #include <cstdio>
@@ -6,6 +5,15 @@
 #include "loans.h"
 
 using namespace std;
+
+void ensure_loans_file_exists(const string& filename)
+{
+    ifstream in(filename);
+    if (in.good())
+        return;
+
+    ofstream out(filename, ios::app);
+}
 
 bool loan_exists(int user_id, int book_id, const string& filename)
 {

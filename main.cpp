@@ -3,11 +3,9 @@
 
 #include "books.h"
 #include "users.h"
+#include "config.h"
 
 using namespace std;
-
-const string USERS_FILE = "users.txt";
-const string BOOKS_FILE = "books.txt";
 
 int main()
 {
@@ -34,6 +32,7 @@ int main()
         cout << "5. Add book (admin)\n";
         cout << "6. Add user (admin)\n";
         cout << "7. Display users (admin)\n";
+        cout << "8. My borrowed books\n";
         cout << "0. Exit\n";
         cout << "Choice: ";
 
@@ -98,6 +97,10 @@ int main()
                     break;
                 }
                 display_users(USERS_FILE);
+                break;
+
+            case 8:
+                display_my_borrowed_books(user_id, BOOKS_FILE);
                 break;
 
             case 0:

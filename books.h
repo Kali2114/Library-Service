@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
 #include <fstream>
-
 #include "models.h"
 
 int get_next_id(const std::string& filename);
@@ -19,3 +18,5 @@ bool open_files(const std::string& filename, std::ifstream& in, std::ofstream& t
 bool parse_id(const std::string& line, int& id);
 
 void display_books(const std::string& filename);
+
+void display_my_borrowed_books(int user_id, const std::string& books_filename);

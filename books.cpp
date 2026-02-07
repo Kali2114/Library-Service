@@ -2,19 +2,12 @@
 #include <fstream>
 #include <cstdio>
 #include <string>
-#include <limits>
 
 #include "books.h"
 #include "loans.h"
+#include "config.h"
 
 using namespace std;
-
-const string LOANS_FILE = "loans.txt";
-
-static void ignore_line()
-{
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-}
 
 bool open_files(const string& filename, ifstream& in, ofstream& tmp)
 {
@@ -66,7 +59,7 @@ void add_book(const string& filename)
 {
     Book book;
 
-    ignore_line();
+    cin.ignore();
     cout << "Enter title: ";
     getline(cin, book.title);
 
@@ -107,16 +100,19 @@ bool is_library_empty(const string& filename)
 
 bool remove_book_by_id(const string& filename, int book_id)
 {
-    // NIE usuwamy książki jeśli jest wypożyczona (żeby loans się nie rozjechały)
+    ensure_loans_file_exists(LOANS_FILE);
+
     if (book_is_borrowed_by_someone(book_id, LOANS_FILE))
+    {
+        cout << "Cannot remove: book is currently borrowed." << endl;
         return false;
+    }
 
     ifstream in(filename);
     if (!in)
         return false;
 
-    const string tmp_name = filename + ".tmp";
-    ofstream tmp(tmp_name);
+    ofstream tmp(filename + ".tmp");
     if (!tmp)
         return false;
 
@@ -146,12 +142,12 @@ bool remove_book_by_id(const string& filename, int book_id)
 
     if (!found)
     {
-        remove(tmp_name.c_str());
+        remove((filename + ".tmp").c_str());
         return false;
     }
 
     remove(filename.c_str());
-    rename(tmp_name.c_str(), filename.c_str());
+    rename((filename + ".tmp").c_str(), filename.c_str());
     return true;
 }
 
@@ -167,21 +163,16 @@ void remove_book(const string& filename)
     cout << "Enter book id to remove: ";
     cin >> book_id;
 
-    if (book_is_borrowed_by_someone(book_id, LOANS_FILE))
-    {
-        cout << "Cannot remove: book is currently borrowed." << endl;
-        return;
-    }
-
     if (remove_book_by_id(filename, book_id))
         cout << "Book removed." << endl;
     else
-        cout << "No book with this id (or cannot remove)." << endl;
+        cout << "No book with this id (or borrowed)." << endl;
 }
 
 bool borrow_book(int user_id, int book_id, const string& filename)
 {
-    // 1) jeśli loans mówi, że ktoś ma tę książkę -> stop
+    ensure_loans_file_exists(LOANS_FILE);
+
     if (book_is_borrowed_by_someone(book_id, LOANS_FILE))
     {
         cout << "Book already borrowed." << endl;
@@ -190,6 +181,7 @@ bool borrow_book(int user_id, int book_id, const string& filename)
 
     ifstream in;
     ofstream tmp;
+
     if (!open_files(filename, in, tmp))
     {
         cout << "Error opening books file." << endl;
@@ -198,7 +190,6 @@ bool borrow_book(int user_id, int book_id, const string& filename)
 
     string line;
     bool found = false;
-    bool changed = false;
 
     while (getline(in, line))
     {
@@ -215,26 +206,13 @@ bool borrow_book(int user_id, int book_id, const string& filename)
         if (id != book_id)
         {
             tmp << line << '\n';
-            continue;
-        }
-
-        // id == book_id
-        found = true;
-
-        size_t last = line.rfind('|');
-        int avail = stoi(line.substr(last + 1));
-
-        if (avail == 0)
-        {
-            // już niedostępna wg books.txt
-            tmp << line << '\n';
         }
         else
         {
-            // zmieniamy na unavailable
+            found = true;
+            size_t last = line.rfind('|');
             string prefix = line.substr(0, last + 1);
             tmp << prefix << 0 << '\n';
-            changed = true;
         }
     }
 
@@ -248,22 +226,12 @@ bool borrow_book(int user_id, int book_id, const string& filename)
         return false;
     }
 
-    if (!changed)
-    {
-        remove((filename + ".tmp").c_str());
-        cout << "Book already borrowed (books file says unavailable)." << endl;
-        return false;
-    }
-
-    // podmiana pliku books
     remove(filename.c_str());
     rename((filename + ".tmp").c_str(), filename.c_str());
 
-    // zapis do loans
     if (!add_loan(user_id, book_id, LOANS_FILE))
     {
-        cout << "Loan save error (loans file)." << endl;
-        // minimalnie: informacja; (idealnie: rollback books)
+        cout << "Failed to save loan record (loans.txt path/permissions)." << endl;
         return false;
     }
 
@@ -273,6 +241,8 @@ bool borrow_book(int user_id, int book_id, const string& filename)
 
 bool return_book(int user_id, int book_id, const string& filename)
 {
+    ensure_loans_file_exists(LOANS_FILE);
+
     if (!loan_exists(user_id, book_id, LOANS_FILE))
     {
         cout << "You did not borrow this book." << endl;
@@ -281,6 +251,7 @@ bool return_book(int user_id, int book_id, const string& filename)
 
     ifstream in;
     ofstream tmp;
+
     if (!open_files(filename, in, tmp))
     {
         cout << "Error opening books file." << endl;
@@ -289,7 +260,6 @@ bool return_book(int user_id, int book_id, const string& filename)
 
     string line;
     bool found = false;
-    bool changed = false;
 
     while (getline(in, line))
     {
@@ -306,26 +276,13 @@ bool return_book(int user_id, int book_id, const string& filename)
         if (id != book_id)
         {
             tmp << line << '\n';
-            continue;
-        }
-
-        // id == book_id
-        found = true;
-
-        size_t last = line.rfind('|');
-        int avail = stoi(line.substr(last + 1));
-
-        if (avail == 1)
-        {
-            // już dostępna wg books.txt
-            tmp << line << '\n';
         }
         else
         {
-            // zmieniamy na available
+            found = true;
+            size_t last = line.rfind('|');
             string prefix = line.substr(0, last + 1);
             tmp << prefix << 1 << '\n';
-            changed = true;
         }
     }
 
@@ -339,19 +296,12 @@ bool return_book(int user_id, int book_id, const string& filename)
         return false;
     }
 
-    if (!changed)
-    {
-        remove((filename + ".tmp").c_str());
-        cout << "Book already returned (books file says available)." << endl;
-        return false;
-    }
-
     remove(filename.c_str());
     rename((filename + ".tmp").c_str(), filename.c_str());
 
     if (!remove_loan(user_id, book_id, LOANS_FILE))
     {
-        cout << "Loan remove error (loans file)." << endl;
+        cout << "Failed to remove loan record." << endl;
         return false;
     }
 
@@ -361,6 +311,8 @@ bool return_book(int user_id, int book_id, const string& filename)
 
 void display_books(const string& filename)
 {
+    ensure_loans_file_exists(LOANS_FILE);
+
     ifstream in(filename);
     if (!in)
     {
@@ -368,10 +320,64 @@ void display_books(const string& filename)
         return;
     }
 
+    cout << "\n--- BOOKS ---\n";
+    cout << "Format: id | title | author | year | status\n\n";
+
     string line;
     while (getline(in, line))
     {
-        if (!line.empty())
+        if (line.empty())
+            continue;
+
+        int book_id;
+        if (!parse_id(line, book_id))
+        {
             cout << line << endl;
+            continue;
+        }
+
+        size_t last = line.rfind('|');
+        string prefix = (last == string::npos) ? line : line.substr(0, last);
+
+        bool borrowed = book_is_borrowed_by_someone(book_id, LOANS_FILE);
+        cout << prefix << " | " << (borrowed ? "BORROWED" : "AVAILABLE") << endl;
     }
+}
+
+void display_my_borrowed_books(int user_id, const string& books_filename)
+{
+    ensure_loans_file_exists(LOANS_FILE);
+
+    ifstream books(books_filename);
+    if (!books)
+    {
+        cout << "Error opening books file." << endl;
+        return;
+    }
+
+    bool any = false;
+    string line;
+
+    cout << "\n--- MY BORROWED BOOKS ---\n";
+
+    while (getline(books, line))
+    {
+        if (line.empty())
+            continue;
+
+        int book_id;
+        if (!parse_id(line, book_id))
+            continue;
+
+        if (loan_exists(user_id, book_id, LOANS_FILE))
+        {
+            any = true;
+            size_t last = line.rfind('|');
+            string prefix = (last == string::npos) ? line : line.substr(0, last);
+            cout << prefix << endl;
+        }
+    }
+
+    if (!any)
+        cout << "(none)" << endl;
 }
