@@ -1,3 +1,5 @@
+/* Wykonawca projektu - Kamil Kalicki */
+
 #include <iostream>
 #include <string>
 
@@ -26,13 +28,14 @@ int main()
     {
         cout << "\n--- MENU ---\n";
         cout << "1. Display books\n";
-        cout << "2. Borrow book\n";
-        cout << "3. Return book\n";
-        cout << "4. Remove book (admin)\n";
-        cout << "5. Add book (admin)\n";
-        cout << "6. Add user (admin)\n";
-        cout << "7. Display users (admin)\n";
-        cout << "8. My borrowed books\n";
+        cout << "2. My borrowed books\n";
+        cout << "3. Borrow book\n";
+        cout << "4. Return book\n";
+        cout << "5. Remove book (admin)\n";
+        cout << "6. Add book (admin)\n";
+        cout << "7. Add user (admin)\n";
+        cout << "8. Display users (admin)\n";
+        
         cout << "0. Exit\n";
         cout << "Choice: ";
 
@@ -46,6 +49,10 @@ int main()
                 break;
 
             case 2:
+                display_my_borrowed_books(user_id, BOOKS_FILE);
+                break;
+
+            case 3:
             {
                 int book_id;
                 cout << "Enter book id: ";
@@ -54,7 +61,7 @@ int main()
                 break;
             }
 
-            case 3:
+            case 4:
             {
                 int book_id;
                 cout << "Enter book id: ";
@@ -63,7 +70,7 @@ int main()
                 break;
             }
 
-            case 4:
+            case 5:
                 if (!is_admin(user_id, USERS_FILE))
                 {
                     cout << "Access denied (admin only)." << endl;
@@ -72,7 +79,7 @@ int main()
                 remove_book(BOOKS_FILE);
                 break;
 
-            case 5:
+            case 6:
                 if (!is_admin(user_id, USERS_FILE))
                 {
                     cout << "Access denied (admin only)." << endl;
@@ -81,7 +88,7 @@ int main()
                 add_book(BOOKS_FILE);
                 break;
 
-            case 6:
+            case 7:
                 if (!is_admin(user_id, USERS_FILE))
                 {
                     cout << "Access denied (admin only)." << endl;
@@ -90,17 +97,13 @@ int main()
                 add_user(USERS_FILE);
                 break;
 
-            case 7:
+            case 8:
                 if (!is_admin(user_id, USERS_FILE))
                 {
                     cout << "Access denied (admin only)." << endl;
                     break;
                 }
                 display_users(USERS_FILE);
-                break;
-
-            case 8:
-                display_my_borrowed_books(user_id, BOOKS_FILE);
                 break;
 
             case 0:

@@ -1,9 +1,8 @@
 1|Pan Tadeusz|Adam Mickiewicz|1834|1
-2|Lalka|Boleslaw Prus|1890|1
+2|Lalka|Boleslaw Prus|1890|0
 3|Zbrodnia i kara|Fiodor Dostojewski|1866|1
 4|Wiedzmin: Ostatnie zyczenie|Andrzej Sapkowski|1993|1
-5|Rok 1984|George Orwell|1949|1
+5|Rok 1984|George Orwell|1949|0
 6|Hobbit|J.R.R. Tolkien|1937|1
 7|Dziady cz. III|Adam Mickiewicz|1832|1
- 
- 
+8|Szmira|Charles Bukowski|1988|0
