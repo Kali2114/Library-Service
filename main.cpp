@@ -1,4 +1,4 @@
-/* Wykonawca projektu - Kamil Kalicki */
+/* Wykonawca projektu - Changmil Changlicki */
 
 #include <iostream>
 #include <string>
@@ -6,42 +6,19 @@
 #include "books.h"
 #include "users.h"
 #include "config.h"
+#include "menu.h"
 
 using namespace std;
 
 int main()
 {
-    int user_id;
-
-    cout << "Enter your user id: ";
-    cin >> user_id;
-
-    if (!user_exists(user_id, USERS_FILE))
-    {
-        cout << "User does not exist." << endl;
+    int user_id = login_user();
+    if (user_id == -1)
         return 0;
-    }
-
-    cout << "Logged in as user id: " << user_id << endl;
-
-    while (true)
-    {
-        cout << "\n--- MENU ---\n";
-        cout << "1. Display books\n";
-        cout << "2. My borrowed books\n";
-        cout << "3. Borrow book\n";
-        cout << "4. Return book\n";
-        cout << "5. Remove book (admin)\n";
-        cout << "6. Add book (admin)\n";
-        cout << "7. Add user (admin)\n";
-        cout << "8. Display users (admin)\n";
-        
-        cout << "0. Exit\n";
-        cout << "Choice: ";
-
-        int choice;
-        cin >> choice;
-
+    int choice = -1;
+    while (choice != 0)
+    {   
+        choice = display_menu();
         switch (choice)
         {
             case 1:
@@ -108,10 +85,11 @@ int main()
 
             case 0:
                 cout << "Bye." << endl;
-                return 0;
+                break;
 
             default:
                 cout << "Unknown option." << endl;
         }
     }
+    return 0;
 }
