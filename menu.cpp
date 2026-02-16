@@ -36,6 +36,7 @@ int login_user()
     if (!user_exists(user_id, USERS_FILE))
     {
         cout << "User does not exist." << endl;
+        return -1;
     }
 
     cout << "Logged in as user id: " << user_id << endl;
