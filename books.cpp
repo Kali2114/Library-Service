@@ -344,7 +344,7 @@ void display_books(const string& filename)
     }
 }
 
-void display_my_borrowed_books(int user_id, const string& books_filename)
+void my_books(int user_id, const string& books_filename)
 {
     ensure_loans_file_exists(LOANS_FILE);
 

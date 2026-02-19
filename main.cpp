@@ -26,7 +26,7 @@ int main()
                 break;
 
             case 2:
-                display_my_borrowed_books(user_id, BOOKS_FILE);
+                my_books(user_id, BOOKS_FILE);
                 break;
 
             case 3:

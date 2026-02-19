@@ -19,4 +19,4 @@ bool parse_id(const std::string& line, int& id);
 
 void display_books(const std::string& filename);
 
-void display_my_borrowed_books(int user_id, const std::string& books_filename);
+void my_books(int user_id, const std::string& books_filename);
