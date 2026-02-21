@@ -3,6 +3,20 @@
 
 ---
 
+# 📑 Table of Contents
+
+## 🇬🇧 English Version
+1. Introduction
+2. System Architecture
+3. Data Model
+4. Data Storage Design
+5. Functional Description
+6. Core Algorithms
+7. Block Diagrams
+8. Computational Complexity
+9. Limitations
+10. Possible Improvements
+
 # 🇬🇧 English Version
 
 ## 1. Introduction
@@ -205,6 +219,16 @@ Where `n` is the number of records in a given file.
 
 ---
 
+## 9. Block Diagrams
+
+- main.cpp
+
+![main diagram](doc/main.jpg)
+
+- book_is_borrowed_by_someone
+
+![main diagram](doc/book_borrowed.jpg.jpg)
+
 ## 9. Possible Improvements
 
 - Replace text files with a relational database
@@ -217,7 +241,19 @@ Where `n` is the number of records in a given file.
 
 ---
 
+# 📑Spis Treści
+
 # 🇵🇱 Wersja Polska
+1. Wprowadzenie
+2. Architektura Systemu
+3. Model Danych
+4. Projekt Przechowywania Danych
+5. Opis Funkcjonalny
+6. Algorytmy Kluczowe
+7. Schematy Blokowe
+8. Złożoność Obliczeniowa
+9. Ograniczenia
+10. Możliwe Rozszerzenia
 
 ## 1. Wprowadzenie
 
