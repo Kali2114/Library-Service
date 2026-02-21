@@ -229,7 +229,7 @@ Where `n` is the number of records in a given file.
 
 ![main diagram](doc/book_borrowed.jpg)
 
-## 9. Possible Improvements
+## 10. Possible Improvements
 
 - Replace text files with a relational database
 - Implement password-based authentication
@@ -436,7 +436,17 @@ gdzie `n` oznacza liczbę rekordów w danym pliku.
 
 ---
 
-## 9. Możliwe Rozszerzenia
+## 9. Schematy Blokowe
+
+- main.cpp
+
+![main diagram](doc/main.jpg)
+
+- book_is_borrowed_by_someone
+
+![main diagram](doc/book_borrowed.jpg)
+
+## 10. Możliwe Rozszerzenia
 
 - Zastąpienie plików tekstowych relacyjną bazą danych
 - Implementacja uwierzytelniania hasłem
