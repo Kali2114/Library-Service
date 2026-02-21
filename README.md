@@ -227,7 +227,7 @@ Where `n` is the number of records in a given file.
 
 - book_is_borrowed_by_someone
 
-![main diagram](doc/book_borrowed.jpg.jpg)
+![main diagram](doc/book_borrowed.jpg)
 
 ## 9. Possible Improvements
 
